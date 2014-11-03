@@ -2,16 +2,16 @@
 
 ## in der H2
 
--   erstes Bullet 
--   zweites Bullet
--   drittes Bullet
+hallo
 
 ### noch H3
 
--   huhu
--   toll
+huhu
 
-########## und trotz vieler vieler Hashes "nur" H6
+########## und dank vieler Hashes keine Überschrift
+
+##Und
+das ist auch keine Überschrift
 
 Hier steht einfach
 nur Text.
@@ -23,4 +23,3 @@ ein
 zweiter
 Paragraph.
 
--   toll

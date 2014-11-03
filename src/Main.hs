@@ -26,4 +26,7 @@ main = do
                 Just ast -> do -- der Parser war erfolgreich
                     putStrLn "\nGenerated HTML\n=============="
                     -- generiere HTML und gebe es aus
-                    putStrLn $ generateHTML ast
+                    let html = generateHTML ast
+                    putStrLn html
+                    -- geht nur lokal, nicht im FP Haskell Center
+                    writeFile "test.html" html

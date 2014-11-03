@@ -1,41 +1,66 @@
 module Parser ( parse {- nur parse exportieren -} )
     where
 
+import           Control.Applicative ((<$>), (<*>))
 import           IR
-import           Scanner
 
--- Der Parser versucht aus einer Liste von MDToken einen AST zu erzeugen 
-parse :: [MDToken] -> Maybe AST
+-- Der Parser versucht aus einer Liste von Token einen AST zu erzeugen
+parse :: [Token] -> Maybe AST
+
 -- Die leere Liste ergibt eine leere Sequenz
-parse []                       = Just $ Sequence []
--- Zwei Zeilenumbrüche hintereinander sind eine leere Zeile, die in eine Sequenz eingeführt wird (wirklich immer?)
-parse (T_Newline:T_Newline:xs) = maybe Nothing (\(Sequence ast) -> Just $ Sequence (EmptyLine : ast)) $ parse xs
--- ein einzelnes Leerzeichen ignorieren wir (für den Moment?)
-parse (T_Newline:xs)           = parse xs
--- einem Header muss ein Text folgen. Das ergibt zusammen einen Header im AST, er wird einer Sequenz hinzugefügt
-parse (T_H i : T_Text str: xs) = maybe Nothing (\(Sequence ast) -> Just $ Sequence (H i str:ast)) $ parse xs
--- einem listitem-Marker muss auch ein Text folgen. Das gibt zusammen ein Listitem im AST.
--- es wird mit der Hilfsfunktion addLI eingefügt
-parse (T_ULI i: T_Text str: xs) = maybe Nothing (\ast -> Just $ addULI (LI str) ast) $ parse xs
--- ein Text am Anfang gehört in einen Absatz. Damit direkt auf einander folgende Texte in einem gemeinsamen
--- Absatz landen, wird die Hilfsfunktion addP genutzt um den Text einzufügen
-parse (T_Text str: xs)         = maybe Nothing (\ast -> Just $ addP (P str) ast) $ parse xs
--- Der gesamte Rest wird für den Moment ignoriert. Achtung: Der Parser schlägt, in der momentanen Implementierung, nie fehl.
--- Das kann in der Endfassung natürlich nicht so bleiben!
-parse _ = Just $ Sequence []
+parse [] = Just $ Sequence []
+
+-- Zwei Zeilenumbrüche hintereinander sind eine leere Zeile, die in eine Sequenz
+-- eingefügt wird (TODO: in Zukunft nicht immer, z.B. nicht in einem Codeblock!)
+parse (T_Newline:T_Newline:xs) =
+        (\(Sequence ast) -> Sequence (EmptyLine : ast))
+        <$> parse xs
+
+-- einen einzelnen Zeilenumbruch ignorieren wir (TODO: aber nicht mehr bei
+-- z.B. Code Blocks!)
+parse (T_Newline:xs) =
+        (addP (Text "\n")) <$> parse xs
+
+-- einem Header muss ein Text etc. bis zum Zeilenende folgen.
+-- Das ergibt zusammen einen Header im AST, er wird einer Sequenz hinzugefügt.
+parse (T_H i : xs) =
+    let (content, rest) = span (/= T_Newline) xs
+    in case rest of
+      -- Zwischen den ### und dem Content muss mindestens ein Leerzeichen
+      -- stehen
+      (T_Blanks _ : rest') ->
+        (\(Sequence ast) headerAst -> Sequence (H i (unP headerAst) : ast))
+         <$> parse rest'
+         <*> parse content
+      -- kein Leerzeichen == kein Header
+      _ -> (\ast -> addP (Text (replicate i '#')) ast) <$> parse xs
+
+-- Text
+parse (T_Text str : xs)  = (\ast -> addP (Text str) ast) <$> parse xs
+
+-- Blanks werden hier wieder durch Leerzeichen ersetzt
+parse (T_Blanks i : xs)  = (\ast -> addP (Text (replicate i ' ')) ast) <$> parse xs
+
+parse tokens = error $ show tokens
 
 -- Hilfsfunktionen für den Parser
 
--- Einfügen eines Listenelements in eine ungeordnete Liste
-addULI :: AST -> AST -> AST
--- Wenn wir ein Listenelement einfügen wollen und im Rest schon eine UL haben, fügen wir das Element in die UL ein
-addULI li (Sequence (UL lis : ast)) = Sequence (UL (li:lis) : ast)
--- Andernfalls erzeugen wir eine neue UL.
-addULI li (Sequence ast) = Sequence (UL [li] : ast)
+-- Standardmäßig werden Text, Leerzeichen, etc. in einem P gesammelt
+-- in einem Header ist aber kein P, daher wird der P-Knoten hier wieder
+-- entfernt.
+unP :: AST -> AST
+unP (Sequence (P ast : asts )) = Sequence (Sequence ast : asts)
+unP ast = ast
 
--- Mehrere aufeinander folgende Texte werden zu einem Absatz zusammengefügt.
+-- Mehrere aufeinander folgende Texte, Blanks, etc. werden zu einem Absatz
+-- zusammengefügt.
 addP :: AST -> AST -> AST
--- Wenn wir zwei Absätze hintereinander finden, fassen wir diese zusammen 
-addP (P str1) (Sequence (P str2 : ast)) = Sequence (P (str1 ++ "\n" ++ str2) : ast)
--- Andernfalls bleibt der Absatz alleine
+-- Wenn wir zwei Absätze hintereinander finden, fassen wir diese zusammen
+addP (P ast1) (Sequence (P ast2 : asts)) = Sequence (P (ast1 ++ ast2) : asts)
+-- Text und dahinter ein P
+addP text@(Text _) (Sequence (P ast2 : asts)) = Sequence (P (text : ast2) : asts)
+-- Andernfalls bleibt der Absatz alleine und wird vorne in die Sequence
+-- eingefügt
+addP text@(Text _) (Sequence ast) = Sequence (P [text] : ast)
 addP p (Sequence ast) = Sequence (p : ast)
+addP p ast = error $ show p ++ "\n" ++ show ast
