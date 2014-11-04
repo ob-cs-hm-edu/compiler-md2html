@@ -1,6 +1,6 @@
 module CodeGen where
 
-import IR
+import           IR
 
 htmlHead, htmlFooter :: String
 htmlHead = "<!DOCTYPE html>\n\
@@ -17,11 +17,11 @@ generateHTML :: AST -> String
 generateHTML ast = htmlHead ++ generateHTML' ast ++ htmlFooter
 
 generateHTML' :: AST -> String
-generateHTML' (Sequence as) =
-    concat $ map generateHTML' as
+generateHTML' (Text str) = str
+generateHTML' (P ast)  =
+    "<p>" ++ concatMap generateHTML' ast ++ "</p>\n"
 generateHTML' (H i ast) =
     "<h" ++ show i ++ ">" ++ generateHTML' ast ++ "</h" ++ show i ++ ">\n"
-generateHTML' (P ast)  =
-    "<p>" ++ concat (map generateHTML' ast) ++ "</p>\n"
-generateHTML' (Text str) = str
+generateHTML' (Sequence as) =
+    concatMap generateHTML' as
 generateHTML' _ = ""

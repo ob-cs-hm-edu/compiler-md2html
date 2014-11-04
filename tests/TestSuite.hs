@@ -1,10 +1,10 @@
 module Main where
 
-import Test.Framework
+import           Test.Framework
 
-import ScannerTests
-import ParserTests
-import CodeGenTests
+import           CodeGenTests
+import           ParserTests
+import           ScannerTests
 
 tests :: [Test]
 tests = scannerTests ++ parserTests ++ codeGenTests

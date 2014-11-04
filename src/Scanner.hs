@@ -1,7 +1,7 @@
 module Scanner (scan) where
 
-import Control.Applicative ((<$>))
-import IR (Token (..))
+import           Control.Applicative ((<$>))
+import           IR                  (Token (..))
 
 -- der Scanner erzeugt aus einem Zeichenstrom vielleicht einen Tokenstrom
 scan :: String -> Maybe [Token]

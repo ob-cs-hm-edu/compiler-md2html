@@ -12,5 +12,5 @@ data AST = Sequence [AST]   -- eine Sequenz von HTML-Elementen
                             -- und der AST repräsentiert den Inhalt
          | P [AST]          -- ein Absatz mit dem Inhalt
          | Text String      -- einfach nur Text
-         | EmptyLine        -- eine leere Zeile
+         | Emptyline        -- eine leere Zeile
     deriving (Eq, Show)

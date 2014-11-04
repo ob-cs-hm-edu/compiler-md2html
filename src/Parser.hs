@@ -13,33 +13,33 @@ parse [] = Just $ Sequence []
 -- Zwei Zeilenumbrüche hintereinander sind eine leere Zeile, die in eine Sequenz
 -- eingefügt wird (TODO: in Zukunft nicht immer, z.B. nicht in einem Codeblock!)
 parse (T_Newline:T_Newline:xs) =
-        (\(Sequence ast) -> Sequence (EmptyLine : ast))
+        (\(Sequence ast) -> Sequence (Emptyline : ast))
         <$> parse xs
 
 -- einen einzelnen Zeilenumbruch ignorieren wir (TODO: aber nicht mehr bei
 -- z.B. Code Blocks!)
 parse (T_Newline:xs) =
-        (addP (Text "\n")) <$> parse xs
+        addP (Text "\n") <$> parse xs
 
 -- einem Header muss ein Text etc. bis zum Zeilenende folgen.
 -- Das ergibt zusammen einen Header im AST, er wird einer Sequenz hinzugefügt.
 parse (T_H i : xs) =
     let (content, rest) = span (/= T_Newline) xs
-    in case rest of
+    in case content of
       -- Zwischen den ### und dem Content muss mindestens ein Leerzeichen
       -- stehen
-      (T_Blanks _ : rest') ->
+      (T_Blanks _ : content') ->
         (\(Sequence ast) headerAst -> Sequence (H i (unP headerAst) : ast))
-         <$> parse rest'
-         <*> parse content
+         <$> parse rest
+         <*> parse content'
       -- kein Leerzeichen == kein Header
-      _ -> (\ast -> addP (Text (replicate i '#')) ast) <$> parse xs
+      _ -> addP (Text (replicate i '#')) <$> parse xs
 
 -- Text
-parse (T_Text str : xs)  = (\ast -> addP (Text str) ast) <$> parse xs
+parse (T_Text str : xs)  = addP (Text str) <$> parse xs
 
 -- Blanks werden hier wieder durch Leerzeichen ersetzt
-parse (T_Blanks i : xs)  = (\ast -> addP (Text (replicate i ' ')) ast) <$> parse xs
+parse (T_Blanks i : xs)  = addP (Text (replicate i ' ')) <$> parse xs
 
 parse tokens = error $ show tokens
 
@@ -49,6 +49,7 @@ parse tokens = error $ show tokens
 -- in einem Header ist aber kein P, daher wird der P-Knoten hier wieder
 -- entfernt.
 unP :: AST -> AST
+unP (Sequence [P asts]) = Sequence asts
 unP (Sequence (P ast : asts )) = Sequence (Sequence ast : asts)
 unP ast = ast
 
