@@ -1,7 +1,9 @@
-module Scanner (scan) where
+module Scanner
+  ( scan
+  ) where
 
 import           Control.Applicative ((<$>))
-import           IR                  (Token (..))
+import           Types               (Token (..))
 
 -- der Scanner erzeugt aus einem Zeichenstrom vielleicht einen Tokenstrom
 scan :: String -> Maybe [Token]
@@ -10,22 +12,22 @@ scan :: String -> Maybe [Token]
 scan ""           = Just []
 
 -- ein Zeilenumbruch
-scan ('\n':xs)    = (T_Newline : ) <$> scan xs
+scan ('\n':xs)    = (TokenNewline : ) <$> scan xs
 
 -- eine Anzahl Leerzeichen
 scan str@(' ':_) = let (blanks, rest) = span (==' ') str
-    in ( T_Blanks (length blanks) : ) <$> scan rest
+    in ( TokenBlanks (length blanks) : ) <$> scan rest
 
 -- Hashes die eine Überschrift markieren oder Text
 scan str@('#':_) =
     let (hashes, rest) = span (=='#') str
         level = length hashes
     in (if level <= 6
-           then ( T_H level : )
-           else ( T_Text hashes : ))
+           then ( TokenH level : )
+           else ( TokenText hashes : ))
         <$> scan rest
 
 -- Text ohne die vorher erkannten Zeichen
 scan str          =
     let (text, rest) = span (`notElem` "# \n") str
-    in (T_Text text : ) <$> scan rest
+    in (TokenText text : ) <$> scan rest

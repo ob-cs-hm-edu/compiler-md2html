@@ -1,9 +1,12 @@
-module CodeGen where
+module HTMLGen
+  ( generateHTML
+  ) where
 
-import           IR
+import           Types
 
 htmlHead, htmlFooter :: String
 htmlHead = "<!DOCTYPE html>\n\
+ \<meta charset=\"utf-8\"/>\
  \<html>\n\
  \ <head>\n\
  \  <title>\n\

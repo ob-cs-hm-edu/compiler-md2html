@@ -1,9 +1,9 @@
-module IR where
+module Types where
 
-data Token = T_Newline      -- '\n'
-           | T_H Int        -- ein Header mit der Anzahl der Hashes
-           | T_Text String  -- Text
-           | T_Blanks Int   -- Blanks mit Anzahl
+data Token = TokenNewline      -- '\n'
+           | TokenH Int        -- ein Header mit der Anzahl der Hashes
+           | TokenText String  -- Text
+           | TokenBlanks Int   -- Blanks mit Anzahl
     deriving (Show, Eq)
 
 -- Abstract Syntax Tree für HTML-Generierung. Daher schon nahe an HTML angelehnt.

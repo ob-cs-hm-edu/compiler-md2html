@@ -1,8 +1,9 @@
-module Parser ( parse {- nur parse exportieren -} )
-    where
+module Parser
+  ( parse
+  ) where
 
 import           Control.Applicative ((<$>), (<*>))
-import           IR
+import           Types
 
 -- Der Parser versucht aus einer Liste von Token einen AST zu erzeugen
 parse :: [Token] -> Maybe AST
@@ -12,23 +13,23 @@ parse [] = Just $ Sequence []
 
 -- Zwei Zeilenumbrüche hintereinander sind eine leere Zeile, die in eine Sequenz
 -- eingefügt wird (TODO: in Zukunft nicht immer, z.B. nicht in einem Codeblock!)
-parse (T_Newline:T_Newline:xs) =
+parse (TokenNewline:TokenNewline:xs) =
         (\(Sequence ast) -> Sequence (Emptyline : ast))
         <$> parse xs
 
 -- einen einzelnen Zeilenumbruch ignorieren wir (TODO: aber nicht mehr bei
 -- z.B. Code Blocks!)
-parse (T_Newline:xs) =
+parse (TokenNewline:xs) =
         addP (Text "\n") <$> parse xs
 
 -- einem Header muss ein Text etc. bis zum Zeilenende folgen.
 -- Das ergibt zusammen einen Header im AST, er wird einer Sequenz hinzugefügt.
-parse (T_H i : xs) =
-    let (content, rest) = span (/= T_Newline) xs
+parse (TokenH i : xs) =
+    let (content, rest) = span (/= TokenNewline) xs
     in case content of
       -- Zwischen den ### und dem Content muss mindestens ein Leerzeichen
       -- stehen
-      (T_Blanks _ : content') ->
+      (TokenBlanks _ : content') ->
         (\(Sequence ast) headerAst -> Sequence (H i (unP headerAst) : ast))
          <$> parse rest
          <*> parse content'
@@ -36,12 +37,10 @@ parse (T_H i : xs) =
       _ -> addP (Text (replicate i '#')) <$> parse xs
 
 -- Text
-parse (T_Text str : xs)  = addP (Text str) <$> parse xs
+parse (TokenText str : xs)  = addP (Text str) <$> parse xs
 
 -- Blanks werden hier wieder durch Leerzeichen ersetzt
-parse (T_Blanks i : xs)  = addP (Text (replicate i ' ')) <$> parse xs
-
-parse tokens = error $ show tokens
+parse (TokenBlanks i : xs)  = addP (Text (replicate i ' ')) <$> parse xs
 
 -- Hilfsfunktionen für den Parser
 
@@ -49,9 +48,9 @@ parse tokens = error $ show tokens
 -- in einem Header ist aber kein P, daher wird der P-Knoten hier wieder
 -- entfernt.
 unP :: AST -> AST
-unP (Sequence [P asts]) = Sequence asts
+unP (Sequence [P asts])        = Sequence asts
 unP (Sequence (P ast : asts )) = Sequence (Sequence ast : asts)
-unP ast = ast
+unP ast                        = ast
 
 -- Mehrere aufeinander folgende Texte, Blanks, etc. werden zu einem Absatz
 -- zusammengefügt.

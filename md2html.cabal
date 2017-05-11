@@ -15,17 +15,18 @@ executable md2html
   hs-source-dirs:    app
   main-is:           Main.hs
   build-depends:     base
+                   , directory
                    , optparse-applicative
                    , md2html
   default-language:  Haskell2010
 
 library
   hs-source-dirs:    src
-  exposed-modules:   CodeGen
-                   , IR
+  exposed-modules:   DotGen
+                   , HTMLGen
                    , Parser
                    , Scanner
-                   -- , Types
+                   , Types
   build-depends:     base
                    , containers
   default-language:  Haskell2010
