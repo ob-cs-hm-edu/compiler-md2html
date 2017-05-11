@@ -3,8 +3,8 @@ module ScannerSpec (spec) where
 import           Data.Maybe (fromJust)
 import           Test.Hspec
 
-import           IR
 import           Scanner
+import           Types
 
 scanAndExtractFirst :: String -> Token
 scanAndExtractFirst = head . fromJust . scan
@@ -17,40 +17,39 @@ spec =
             scan "" `shouldBe` Just []
 
         it "scans a newline" $
-            scanAndExtractFirst "\n" `shouldBe` T_Newline
+            scanAndExtractFirst "\n" `shouldBe` TokenNewline
 
         it "scans a blank" $
-            scanAndExtractFirst " h a l l o" `shouldBe` T_Blanks 1
+            scanAndExtractFirst " h a l l o" `shouldBe` TokenBlanks 1
 
         it "scans 10 blanks" $
             scanAndExtractFirst "          h a l l o"
-                `shouldBe` T_Blanks 10
+                `shouldBe` TokenBlanks 10
 
         it "scans H1" $
-            scanAndExtractFirst "# Hallo" `shouldBe` T_H 1
+            scanAndExtractFirst "# Hallo" `shouldBe` TokenH 1
 
         it "scans H2" $
-            scanAndExtractFirst "## Hallo" `shouldBe` T_H 2
+            scanAndExtractFirst "## Hallo" `shouldBe` TokenH 2
 
         it "scans H3" $
-            scanAndExtractFirst "### Hallo" `shouldBe` T_H 3
+            scanAndExtractFirst "### Hallo" `shouldBe` TokenH 3
 
         it "scans H4" $
-            scanAndExtractFirst "#### Hallo" `shouldBe` T_H 4
+            scanAndExtractFirst "#### Hallo" `shouldBe` TokenH 4
 
         it "scans H5" $
-            scanAndExtractFirst "##### Hallo" `shouldBe` T_H 5
+            scanAndExtractFirst "##### Hallo" `shouldBe` TokenH 5
 
         it "scans H6" $
-            scanAndExtractFirst "###### Hallo" `shouldBe` T_H 6
+            scanAndExtractFirst "###### Hallo" `shouldBe` TokenH 6
 
         it "scans no H7 gut a Text" $
             scanAndExtractFirst "####### Hallo"
-                `shouldBe` T_Text "#######"
+                `shouldBe` TokenText "#######"
 
         it "scans H4 without a following blank" $
-            scanAndExtractFirst "####Hallo" `shouldBe` T_H 4
+            scanAndExtractFirst "####Hallo" `shouldBe` TokenH 4
 
         it "scans a string" $
-            scanAndExtractFirst "Hallo" `shouldBe` T_Text "Hallo"
-
+            scanAndExtractFirst "Hallo" `shouldBe` TokenText "Hallo"

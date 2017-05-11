@@ -1,5 +1,6 @@
 module HTMLGen
   ( generateHTML
+  , generateHTML'
   ) where
 
 import           Types

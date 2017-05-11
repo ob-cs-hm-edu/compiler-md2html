@@ -1,15 +1,15 @@
-module CodeGenSpec (spec) where
+module HTMLGenSpec (spec) where
 
 import           Test.Hspec
 
-import           CodeGen
-import           IR
+import           HTMLGen
+import           Types
 
 spec :: Spec
 spec =
     describe "The code generator" $ do
         it "generates HTML for the empty AST" $
-            generateHTML (Sequence []) `shouldBe` (htmlHead ++ htmlFooter)
+            generateHTML' (Sequence []) `shouldBe` ""
 
         it "generates HTML for a text" $
             generateHTML' (Text "der Text") `shouldBe` "der Text"
